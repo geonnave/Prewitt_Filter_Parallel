@@ -1,5 +1,7 @@
 #include "CImg.h"
+
 using namespace cimg_library;
+
 int main() {
   CImg<unsigned char> src("arial_0.bmp");
   int i, j, c;
@@ -16,3 +18,4 @@ int main() {
   }
   return 0;
 }
+

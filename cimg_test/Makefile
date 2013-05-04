@@ -1,8 +1,11 @@
+RUNDIR = bin
+FILE = main
+
 all: clean compile run
 
 compile:
-	g++ -o main main.cpp -lpthread -lX11
+	g++ -o $(RUNDIR)/$(FILE) $(FILE).cpp -lpthread -lX11
 run:
-	./main
+	$(RUNDIR)/$(FILE)
 clean:
-	rm -f main
+	rm -f $(RUNDIR)/$(FILE)

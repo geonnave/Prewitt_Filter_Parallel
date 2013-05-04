@@ -1,8 +1,11 @@
+RUNDIR = bin
+FILE = main
+
 all: clean compile run
 
 compile:
-	gcc -o main main.c
+	gcc -o $(RUNDIR)/$(FILE) $(FILE).c
 run:
-	./main
+	$(RUNDIR)/$(FILE)
 clean:
-	rm -f main
+	rm -f $(RUNDIR)/$(FILE)
