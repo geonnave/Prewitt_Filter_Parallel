@@ -1,10 +1,12 @@
 FILE = main
+EXEC_PATH = bin
+IMG_PATH = images
 
 all: clean compile run
 
 compile:
-	g++ -o $(FILE) $(FILE).cpp prewitt.cpp -lpthread -lX11
+	g++ -o $(EXEC_PATH)/$(FILE) $(FILE).cpp prewitt.cpp -lpthread -lX11
 run:
-	./$(FILE)
+	$(EXEC_PATH)/$(FILE) $(IMG_PATH)/$(IMG)
 clean:
-	rm -f $(FILE)
+	rm -f $(EXEC_PATH)/$(FILE)

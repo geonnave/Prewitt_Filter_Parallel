@@ -12,10 +12,13 @@ using namespace std;
 
 
 
-void init();
+void init(char *file);
 void ghost_image();
-void run();
-void convolve();
+void run(char* file);
+void prewitt();
+void prewitt_parallel();
+int convolve_one_pixel(int k, int l, int border_len);
+void gauss_blur();
 void soma();
 void sature();
 void display();
