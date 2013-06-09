@@ -11,7 +11,6 @@ using namespace cimg_library;
 using namespace std;
 
 
-
 void init(char *file);
 void ghost_image();
 void run(char* file);

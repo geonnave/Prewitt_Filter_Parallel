@@ -16,55 +16,68 @@ int gb[5][5] = {1, 4, 7, 4, 1,
 								4, 16, 26, 16, 4,
 								1, 4, 7, 4, 1};
 
+
+
+
+
 void run(char* file){
 	init(file);
 	gauss_blur();
 	prewitt();
+	prewitt_parallel();
 	final.save("images/final_blur.jpg");
 	display();
 }
 
+
+
+
+
 void prewitt_parallel(){	//tá massa, agora tem que paralelizar essa porra aqui!
 	int h, v;
 	cimg::tic();
-	for (i = 1; i < width; ++i)
-	{
-		for (j = 1; j < height; ++j)
+		for (i = 1; i < width; ++i)
 		{
-			h =  ghost(i-1, j-1, 0, 0)	*	MH[0][0];
-	    h += ghost(i-1, j,   0, 0)	*	MH[0][1];
-	    h += ghost(i-1, j+1, 0, 0)	*	MH[0][2];
-	    h += ghost(i,   j-1, 0, 0)	*	MH[1][0];
-	    h += ghost(i,   j,   0, 0)	*	MH[1][1];
-	    h += ghost(i,   j+1, 0, 0)	*	MH[1][2];
-	    h += ghost(i+1, j-1, 0, 0)	*	MH[2][0];
-	    h += ghost(i+1, j,   0, 0)	*	MH[2][1];
-	    h += ghost(i+1, j+1, 0, 0)	*	MH[2][2];
+			for (j = 1; j < height; ++j)
+			{
+				h =  ghost(i-1, j-1, 0, 0)	*	MH[0][0];
+		    h += ghost(i-1, j,   0, 0)	*	MH[0][1];
+		    h += ghost(i-1, j+1, 0, 0)	*	MH[0][2];
+		    h += ghost(i,   j-1, 0, 0)	*	MH[1][0];
+		    h += ghost(i,   j,   0, 0)	*	MH[1][1];
+		    h += ghost(i,   j+1, 0, 0)	*	MH[1][2];
+		    h += ghost(i+1, j-1, 0, 0)	*	MH[2][0];
+		    h += ghost(i+1, j,   0, 0)	*	MH[2][1];
+		    h += ghost(i+1, j+1, 0, 0)	*	MH[2][2];
 
-			v =  ghost(i-1, j-1, 0, 0)	*	MV[0][0];
-	    v += ghost(i-1, j,   0, 0)	*	MV[0][1];
-	    v += ghost(i-1, j+1, 0, 0)	*	MV[0][2];
-	    v += ghost(i,   j-1, 0, 0)	*	MV[1][0];
-	    v += ghost(i,   j,   0, 0)	*	MV[1][1];
-	    v += ghost(i,   j+1, 0, 0)	*	MV[1][2];
-	    v += ghost(i+1, j-1, 0, 0)	*	MV[2][0];
-	    v += ghost(i+1, j,   0, 0)	*	MV[2][1];
-	    v += ghost(i+1, j+1, 0, 0)	*	MV[2][2];
+				v =  ghost(i-1, j-1, 0, 0)	*	MV[0][0];
+		    v += ghost(i-1, j,   0, 0)	*	MV[0][1];
+		    v += ghost(i-1, j+1, 0, 0)	*	MV[0][2];
+		    v += ghost(i,   j-1, 0, 0)	*	MV[1][0];
+		    v += ghost(i,   j,   0, 0)	*	MV[1][1];
+		    v += ghost(i,   j+1, 0, 0)	*	MV[1][2];
+		    v += ghost(i+1, j-1, 0, 0)	*	MV[2][0];
+		    v += ghost(i+1, j,   0, 0)	*	MV[2][1];
+		    v += ghost(i+1, j+1, 0, 0)	*	MV[2][2];
 
-			if (h + v < 0){
-				final(i, j, 0, 0) = 0;
-			} else if (h + v > 255) {
-				final(i, j, 0, 0) = 0;
-			} else {
-	    	final(i, j, 0, 0) = h + v;
-	    }
+				if (h + v < 0){
+					final(i, j, 0, 0) = 0;
+				} else if (h + v > 255) {
+					final(i, j, 0, 0) = 0;
+				} else {
+		    	final(i, j, 0, 0) = h + v;
+		    }
+			}
 		}
-	}
-	printf("\n\n\n\n\n");
+	printf("parallel\n\n\n\n\n");
 	printf("image size: [%d x %d]\n", width, height);
 	cimg::toc();
 	printf("\n\n\n\n\n");
 }
+
+
+
+
 
 void prewitt(){
 	int h, v;
@@ -107,6 +120,23 @@ void prewitt(){
 	cimg::toc();
 	printf("\n\n\n\n\n");
 }
+
+int convolve_one_pixel(int k, int l, int win_size) {
+	int sum = 0;
+	int ii, jj;
+	for (ii = 0; ii < win_size; ++ii)
+	{
+		for (jj = 0; jj < win_size; ++jj)
+		{
+			sum += ghost(k+ii, l+jj, 0, 0)*gb[ii][jj];
+		}
+	}
+	sum = (int) sum/273;
+	return sum;
+}
+
+
+
 
 
 void init(char *file){	
@@ -167,16 +197,3 @@ void gauss_blur() {
 	ghost.save("images/blur.jpg");
 }
 
-int convolve_one_pixel(int k, int l, int win_size) {
-	int sum = 0;
-	int ii, jj;
-	for (ii = 0; ii < win_size; ++ii)
-	{
-		for (jj = 0; jj < win_size; ++jj)
-		{
-			sum += ghost(k+ii, l+jj, 0, 0)*gb[ii][jj];
-		}
-	}
-	sum = (int) sum/273;
-	return sum;
-}
