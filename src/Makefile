@@ -18,7 +18,7 @@ compile_o2:
 	g++ -o $(EXEC_PATH)/$(FILE)_O2 $(FILE).cpp prewitt.cpp -lpthread -lX11 -fopenmp -O2 -march=native
 
 compile_o3:
-	g++ -o $(EXEC_PATH)/$(FILE)_O3 $(FILE).cpp prewitt.cpp -lpthread -lX11 -fopenmp -O2 -march=native
+	g++ -o $(EXEC_PATH)/$(FILE)_O3 $(FILE).cpp prewitt.cpp -lpthread -lX11 -fopenmp -O3 -march=native -ftree-vectorizer-verbose=5
 
 run_param:
 	$(EXEC_PATH)/$(FILE)$(SUFIX) $(IMG_PATH)/$(IMG) $(THREADS)
