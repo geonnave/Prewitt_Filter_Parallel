@@ -5,6 +5,7 @@
 #include "prewitt.h"
 #include  <iostream>
 #include <math.h>
+#include <omp.h>
 
 
 using namespace cimg_library;

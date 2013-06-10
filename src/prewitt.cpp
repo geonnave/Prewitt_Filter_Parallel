@@ -1,4 +1,5 @@
 #include "prewitt.h"
+#include <omp.h>
 
 
 int i, j;
@@ -23,8 +24,8 @@ int gb[5][5] = {1, 4, 7, 4, 1,
 void run(char* file){
 	init(file);
 	gauss_blur();
-	prewitt();
 	prewitt_parallel();
+	prewitt();
 	final.save("images/final_blur.jpg");
 	display();
 }
@@ -33,43 +34,80 @@ void run(char* file){
 
 
 
-void prewitt_parallel(){	//tá massa, agora tem que paralelizar essa porra aqui!
-	int h, v;
+void prewitt_parallel(){	
+	int threads;
 	cimg::tic();
-		for (i = 1; i < width; ++i)
+	#pragma omp parallel num_threads(3)
+	{
+		threads = omp_get_num_threads();
+		int ii, jj, iend, jend;
+		int h, v;
+		int nt = omp_get_thread_num();
+		int start = ((width/omp_get_num_threads())*nt)+1;
+		printf("start: %d\n", start);
+		int end = start+(width/omp_get_num_threads());
+		printf("end: %d\n", end);
+		// ii = start;
+		if (nt % 2 == 1) {
+			ii = start;
+			iend = end-1;
+		} else {
+			ii = end-1;
+			iend = start;
+		}
+		while (ii != iend)// for (ii = start; ii < end; ++ii)
 		{
-			for (j = 1; j < height; ++j)
+			if (ii % 2 == 1) {
+				jj = 1;
+				jend = height-1;
+			} else {
+				jj = height-1;
+				jend = 1;
+			}
+			while (jj != jend) //for (jj = 1; jj < height; ++jj)
 			{
-				h =  ghost(i-1, j-1, 0, 0)	*	MH[0][0];
-		    h += ghost(i-1, j,   0, 0)	*	MH[0][1];
-		    h += ghost(i-1, j+1, 0, 0)	*	MH[0][2];
-		    h += ghost(i,   j-1, 0, 0)	*	MH[1][0];
-		    h += ghost(i,   j,   0, 0)	*	MH[1][1];
-		    h += ghost(i,   j+1, 0, 0)	*	MH[1][2];
-		    h += ghost(i+1, j-1, 0, 0)	*	MH[2][0];
-		    h += ghost(i+1, j,   0, 0)	*	MH[2][1];
-		    h += ghost(i+1, j+1, 0, 0)	*	MH[2][2];
+				// printf("(%d, %d)\t", ii, jj);
+				h =  ghost(ii-1, jj-1, 0, 0)	*	MH[0][0];
+		    h += ghost(ii-1, jj,   0, 0)	*	MH[0][1];
+		    h += ghost(ii-1, jj+1, 0, 0)	*	MH[0][2];
+		    h += ghost(ii,   jj-1, 0, 0)	*	MH[1][0];
+		    h += ghost(ii,   jj,   0, 0)	*	MH[1][1];
+		    h += ghost(ii,   jj+1, 0, 0)	*	MH[1][2];
+		    h += ghost(ii+1, jj-1, 0, 0)	*	MH[2][0];
+		    h += ghost(ii+1, jj,   0, 0)	*	MH[2][1];
+		    h += ghost(ii+1, jj+1, 0, 0)	*	MH[2][2];
 
-				v =  ghost(i-1, j-1, 0, 0)	*	MV[0][0];
-		    v += ghost(i-1, j,   0, 0)	*	MV[0][1];
-		    v += ghost(i-1, j+1, 0, 0)	*	MV[0][2];
-		    v += ghost(i,   j-1, 0, 0)	*	MV[1][0];
-		    v += ghost(i,   j,   0, 0)	*	MV[1][1];
-		    v += ghost(i,   j+1, 0, 0)	*	MV[1][2];
-		    v += ghost(i+1, j-1, 0, 0)	*	MV[2][0];
-		    v += ghost(i+1, j,   0, 0)	*	MV[2][1];
-		    v += ghost(i+1, j+1, 0, 0)	*	MV[2][2];
+				v =  ghost(ii-1, jj-1, 0, 0)	*	MV[0][0];
+		    v += ghost(ii-1, jj,   0, 0)	*	MV[0][1];
+		    v += ghost(ii-1, jj+1, 0, 0)	*	MV[0][2];
+		    v += ghost(ii,   jj-1, 0, 0)	*	MV[1][0];
+		    v += ghost(ii,   jj,   0, 0)	*	MV[1][1];
+		    v += ghost(ii,   jj+1, 0, 0)	*	MV[1][2];
+		    v += ghost(ii+1, jj-1, 0, 0)	*	MV[2][0];
+		    v += ghost(ii+1, jj,   0, 0)	*	MV[2][1];
+		    v += ghost(ii+1, jj+1, 0, 0)	*	MV[2][2];
 
 				if (h + v < 0){
-					final(i, j, 0, 0) = 0;
+					final(ii, jj, 0, 0) = 0;
 				} else if (h + v > 255) {
-					final(i, j, 0, 0) = 0;
+					final(ii, jj, 0, 0) = 0;
 				} else {
-		    	final(i, j, 0, 0) = h + v;
+		    	final(ii, jj, 0, 0) = h + v;
 		    }
+		    if (jend == height-1)
+		    	jj++;
+		    else
+		    	jj--;
 			}
+			if (iend == end-1)
+				ii++;
+			else
+				ii--;
+			// ii++;
+			// printf("\n");
 		}
-	printf("parallel\n\n\n\n\n");
+	}
+	printf("\n\n\n\nparallel, num_threads: %d\n", threads);
 	printf("image size: [%d x %d]\n", width, height);
 	cimg::toc();
 	printf("\n\n\n\n\n");
@@ -161,11 +199,11 @@ void init(char *file){
 			if (i == 0){
 				ghost(0, j, 0, 0) = 0;
 			} else if (i == width) {
-				ghost(width, j, 0, 0) = 0;
+				ghost(width+1, j, 0, 0) = 0;
 			} else if (j == 0){
 				ghost(i, 0, 0, 0) = 0;
 			} else if (j == height) {
-				ghost(i, height, 0, 0) = 0;
+				ghost(i, height+1, 0, 0) = 0;
 			} else {
 				r = image(i,j,0,0); // First channel RED
 				g = image(i,j,0,1); // Second channel GREEN
