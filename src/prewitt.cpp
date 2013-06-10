@@ -32,68 +32,6 @@ void run(){
 
 
 
-void prewitt_parallel_v3(){	
-	cimg::tic();
-	#pragma omp parallel num_threads(n_threads)
-	{
-		int ii, jj, iend, jend;
-		int h, v;
-		int nt = omp_get_thread_num();
-		int start = ((width/omp_get_num_threads())*nt)+1;
-		int end = start+(width/omp_get_num_threads());
-		if (nt % 2 == 1) {
-			ii = start;
-			iend = end-1;
-		} else {
-			ii = end-1;
-			iend = start;
-		}
-		while (ii != iend)// for (ii = start; ii < end; ++ii)
-		{
-			if (ii % 2 == 1) {
-				jj = 1;
-				jend = height-1;
-			} else {
-				jj = height-1;
-				jend = 1;
-			}
-			while (jj != jend) //for (jj = 1; jj < height; ++jj)
-			{
-				h = 0;
-				v = 0;
-				for (int k = -1; k < 2; ++k)
-				{
-					for (int l = -1; l < 2; ++l)
-					{
-						h += ghost(ii+k, jj+l, 0, 0) * MH[k+1][j+1];
-						v += ghost(ii+k, jj+l, 0, 0) * MV[k+1][j+1];
-					}
-				}
-
-				if (h + v < 0){
-					final(ii, jj, 0, 0) = 0;
-				} else if (h + v > 255) {
-					final(ii, jj, 0, 0) = 0;
-				} else {
-		    	final(ii, jj, 0, 0) = h + v;
-		    }
-		    if (jend == height-1)
-		    	jj++;
-		    else
-		    	jj--;
-			}
-			if (iend == end-1)
-				ii++;
-			else
-				ii--;
-		}
-	}
-	printf("\n\nparallel_v2, num_threads: %d\n", n_threads);
-	printf("image size: [%d x %d]\n", width, height);
-	cimg::toc();
-	printf("\n\n");
-	// final.save("images/prewitt.jpg");
-}
 void prewitt_parallel_v2(){	
 	cimg::tic();
 	#pragma omp parallel num_threads(n_threads)
@@ -103,22 +41,20 @@ void prewitt_parallel_v2(){
 		int nt = omp_get_thread_num();
 		int start = ((width/omp_get_num_threads())*nt)+1;
 		int end = start+(width/omp_get_num_threads());
-		if (nt % 2 == 1) {
+		ii = end-1;
+		iend = start;
+		if (!(nt % 2)) {
 			ii = start;
 			iend = end-1;
-		} else {
-			ii = end-1;
-			iend = start;
-		}
+		} 
 		while (ii != iend)// for (ii = start; ii < end; ++ii)
 		{
-			if (ii % 2 == 1) {
+			jj = height-1;
+			jend = 1;
+			if (!(ii % 2)) {
 				jj = 1;
 				jend = height-1;
-			} else {
-				jj = height-1;
-				jend = 1;
-			}
+			} 
 			while (jj != jend) //for (jj = 1; jj < height; ++jj)
 			{
 				h =  ghost(ii-1, jj-1, 0, 0)	*	MH[0][0];
@@ -163,7 +99,7 @@ void prewitt_parallel_v2(){
 	printf("image size: [%d x %d]\n", width, height);
 	cimg::toc();
 	printf("\n\n");
-	// final.save("images/prewitt.jpg");
+	final.save("images/prewitt.jpg");
 }
 void prewitt_parallel_v1(){	
 	cimg::tic();
