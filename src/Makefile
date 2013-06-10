@@ -13,3 +13,12 @@ clean:
 
 run_test:
 	$(EXEC_PATH)/$(FILE) 
+
+compile_o2:
+	g++ -o $(EXEC_PATH)/$(FILE)_O2 $(FILE).cpp prewitt.cpp -lpthread -lX11 -fopenmp -O2 -march=native
+
+compile_o3:
+	g++ -o $(EXEC_PATH)/$(FILE)_O3 $(FILE).cpp prewitt.cpp -lpthread -lX11 -fopenmp -O2 -march=native
+
+run_param:
+	$(EXEC_PATH)/$(FILE)$(SUFIX) $(IMG_PATH)/$(IMG) $(THREADS)

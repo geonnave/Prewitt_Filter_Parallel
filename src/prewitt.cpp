@@ -1,4 +1,5 @@
 #include "prewitt.h"
+#include <time.h>
 #include <omp.h>
 
 
@@ -33,7 +34,9 @@ void run(){
 
 
 void prewitt_parallel_v2(){	
-	cimg::tic();
+	double start_t, end_t;
+	double cpu_time_used;
+	start_t = omp_get_wtime();
 	#pragma omp parallel num_threads(n_threads)
 	{
 		int ii, jj, iend, jend;
@@ -41,13 +44,7 @@ void prewitt_parallel_v2(){
 		int nt = omp_get_thread_num();
 		int start = ((width/omp_get_num_threads())*nt)+1;
 		int end = start+(width/omp_get_num_threads());
-		ii = end-1;
-		iend = start;
-		if (!(nt % 2)) {
-			ii = start;
-			iend = end-1;
-		} 
-		while (ii != iend)// for (ii = start; ii < end; ++ii)
+		for (ii = start; ii < end; ++ii)
 		{
 			jj = height-1;
 			jend = 1;
@@ -89,20 +86,23 @@ void prewitt_parallel_v2(){
 		    else
 		    	jj--;
 			}
-			if (iend == end-1)
-				ii++;
-			else
-				ii--;
+			// if (iend == end-1)
+			// 	ii++;
+			// else
+			// 	ii--;
 		}
 	}
 	printf("\n\nparallel_v2, num_threads: %d\n", n_threads);
 	printf("image size: [%d x %d]\n", width, height);
-	cimg::toc();
-	printf("\n\n");
+	end_t = omp_get_wtime();
+	cpu_time_used = ( (end_t - start_t));
+	cout << "CPU Time: " << cpu_time_used << " seconds\n\n";
 	final.save("images/prewitt.jpg");
 }
 void prewitt_parallel_v1(){	
-	cimg::tic();
+	double start_t, end_t;
+	double cpu_time_used;
+	start_t = omp_get_wtime();
 	#pragma omp parallel num_threads(n_threads)
 	{
 		int ii, jj;
@@ -146,8 +146,9 @@ void prewitt_parallel_v1(){
 	}
 	printf("\n\nparallel_v1, num_threads: %d\n", n_threads);
 	printf("image size: [%d x %d]\n", width, height);
-	cimg::toc();
-	printf("\n\n");
+	end_t = omp_get_wtime();
+	cpu_time_used = ( (end_t - start_t));
+	cout << "CPU Time: " << cpu_time_used << " seconds\n\n";
 	// final.save("images/prewitt.jpg");
 }
 
@@ -157,7 +158,9 @@ void prewitt_parallel_v1(){
 
 void prewitt(){
 	int h, v;
-	cimg::tic();
+	clock_t start_t, end_t;
+	double cpu_time_used;
+	start_t = clock();
 	for (i = 1; i < width; ++i)
 	{
 		for (j = 1; j < height; ++j)
@@ -193,7 +196,9 @@ void prewitt(){
 	}
 	printf("\n\n\n\n\n");
 	printf("image size: [%d x %d]\n", width, height);
-	cimg::toc();
+	end_t = clock();
+	cpu_time_used = ((double) (end_t - start_t)) / CLOCKS_PER_SEC;
+	cout << "CPU Time: " << cpu_time_used << " seconds\n\n";	
 	printf("\n\n\n\n\n");
 	// final.save("images/prewitt.jpg");
 }
