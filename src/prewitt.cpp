@@ -3,6 +3,7 @@
 
 
 int i, j;
+int n_threads = 4;
 CImg<unsigned char> image("images/lena.tif");
 int width = image.width();
 int height = image.height();
@@ -21,52 +22,44 @@ int gb[5][5] = {1, 4, 7, 4, 1,
 
 
 
-void run(char* file){
-	init(file);
+void run(){
 	gauss_blur();
-	prewitt_parallel();
+	prewitt_parallel_v2();
 	prewitt();
-	final.save("images/final_blur.jpg");
-	display();
+	// display();
 }
 
 
 
 
 
-void prewitt_parallel(){	
-	int threads;
+void prewitt_parallel_v3(){	
 	cimg::tic();
-	#pragma omp parallel num_threads(3)
+	#pragma omp parallel num_threads(n_threads)
 	{
-		threads = omp_get_num_threads();
 		int ii, jj, iend, jend;
 		int h, v;
 		int nt = omp_get_thread_num();
 		int start = ((width/omp_get_num_threads())*nt)+1;
-		printf("start: %d\n", start);
 		int end = start+(width/omp_get_num_threads());
-		printf("end: %d\n", end);
-		// ii = start;
-		if (nt % 2 == 1) {
+		ii = end-1;
+		iend = start;
+		if (!(nt % 2)) {
 			ii = start;
 			iend = end-1;
-		} else {
-			ii = end-1;
-			iend = start;
-		}
-		while (ii != iend)// for (ii = start; ii < end; ++ii)
+		} 
+		while (ii != iend)
+		// for (ii = start; ii < end; ++ii)
 		{
-			if (ii % 2 == 1) {
+			jj = height-1;
+			jend = 1;
+			if (!(ii % 2)) {
 				jj = 1;
 				jend = height-1;
-			} else {
-				jj = height-1;
-				jend = 1;
 			}
-			while (jj != jend) //for (jj = 1; jj < height; ++jj)
+			while (jj != jend) 
+			// for (jj = 1; jj < height; ++jj)
 			{
-				// printf("(%d, %d)\t", ii, jj);
 				h =  ghost(ii-1, jj-1, 0, 0)	*	MH[0][0];
 		    h += ghost(ii-1, jj,   0, 0)	*	MH[0][1];
 		    h += ghost(ii-1, jj+1, 0, 0)	*	MH[0][2];
@@ -103,14 +96,133 @@ void prewitt_parallel(){
 				ii++;
 			else
 				ii--;
-			// ii++;
-			// printf("\n");
 		}
 	}
-	printf("\n\n\n\nparallel, num_threads: %d\n", threads);
+	printf("\n\nparallel_v3, num_threads: %d\n", n_threads);
 	printf("image size: [%d x %d]\n", width, height);
 	cimg::toc();
-	printf("\n\n\n\n\n");
+	printf("\n\n");
+	// final.save("images/prewitt.jpg");
+}
+void prewitt_parallel_v2(){	
+	cimg::tic();
+	#pragma omp parallel num_threads(n_threads)
+	{
+		int ii, jj, iend, jend;
+		int h, v;
+		int nt = omp_get_thread_num();
+		int start = ((width/omp_get_num_threads())*nt)+1;
+		int end = start+(width/omp_get_num_threads());
+		if (nt % 2 == 1) {
+			ii = start;
+			iend = end-1;
+		} else {
+			ii = end-1;
+			iend = start;
+		}
+		while (ii != iend)// for (ii = start; ii < end; ++ii)
+		{
+			if (ii % 2 == 1) {
+				jj = 1;
+				jend = height-1;
+			} else {
+				jj = height-1;
+				jend = 1;
+			}
+			while (jj != jend) //for (jj = 1; jj < height; ++jj)
+			{
+				h =  ghost(ii-1, jj-1, 0, 0)	*	MH[0][0];
+		    h += ghost(ii-1, jj,   0, 0)	*	MH[0][1];
+		    h += ghost(ii-1, jj+1, 0, 0)	*	MH[0][2];
+		    h += ghost(ii,   jj-1, 0, 0)	*	MH[1][0];
+		    h += ghost(ii,   jj,   0, 0)	*	MH[1][1];
+		    h += ghost(ii,   jj+1, 0, 0)	*	MH[1][2];
+		    h += ghost(ii+1, jj-1, 0, 0)	*	MH[2][0];
+		    h += ghost(ii+1, jj,   0, 0)	*	MH[2][1];
+		    h += ghost(ii+1, jj+1, 0, 0)	*	MH[2][2];
+
+				v =  ghost(ii-1, jj-1, 0, 0)	*	MV[0][0];
+		    v += ghost(ii-1, jj,   0, 0)	*	MV[0][1];
+		    v += ghost(ii-1, jj+1, 0, 0)	*	MV[0][2];
+		    v += ghost(ii,   jj-1, 0, 0)	*	MV[1][0];
+		    v += ghost(ii,   jj,   0, 0)	*	MV[1][1];
+		    v += ghost(ii,   jj+1, 0, 0)	*	MV[1][2];
+		    v += ghost(ii+1, jj-1, 0, 0)	*	MV[2][0];
+		    v += ghost(ii+1, jj,   0, 0)	*	MV[2][1];
+		    v += ghost(ii+1, jj+1, 0, 0)	*	MV[2][2];
+
+				if (h + v < 0){
+					final(ii, jj, 0, 0) = 0;
+				} else if (h + v > 255) {
+					final(ii, jj, 0, 0) = 0;
+				} else {
+		    	final(ii, jj, 0, 0) = h + v;
+		    }
+		    if (jend == height-1)
+		    	jj++;
+		    else
+		    	jj--;
+			}
+			if (iend == end-1)
+				ii++;
+			else
+				ii--;
+		}
+	}
+	printf("\n\nparallel_v2, num_threads: %d\n", n_threads);
+	printf("image size: [%d x %d]\n", width, height);
+	cimg::toc();
+	printf("\n\n");
+	// final.save("images/prewitt.jpg");
+}
+void prewitt_parallel_v1(){	
+	cimg::tic();
+	#pragma omp parallel num_threads(n_threads)
+	{
+		int ii, jj;
+		int h, v;
+		int nt = omp_get_thread_num();
+		int start = ((width/omp_get_num_threads())*nt)+1;
+		int end = start+(width/omp_get_num_threads());
+		for (ii = start; ii < end; ++ii)
+		{
+			for (jj = 1; jj < height; ++jj)
+			{
+				h =  ghost(ii-1, jj-1, 0, 0)	*	MH[0][0];
+		    h += ghost(ii-1, jj,   0, 0)	*	MH[0][1];
+		    h += ghost(ii-1, jj+1, 0, 0)	*	MH[0][2];
+		    h += ghost(ii,   jj-1, 0, 0)	*	MH[1][0];
+		    h += ghost(ii,   jj,   0, 0)	*	MH[1][1];
+		    h += ghost(ii,   jj+1, 0, 0)	*	MH[1][2];
+		    h += ghost(ii+1, jj-1, 0, 0)	*	MH[2][0];
+		    h += ghost(ii+1, jj,   0, 0)	*	MH[2][1];
+		    h += ghost(ii+1, jj+1, 0, 0)	*	MH[2][2];
+
+				v =  ghost(ii-1, jj-1, 0, 0)	*	MV[0][0];
+		    v += ghost(ii-1, jj,   0, 0)	*	MV[0][1];
+		    v += ghost(ii-1, jj+1, 0, 0)	*	MV[0][2];
+		    v += ghost(ii,   jj-1, 0, 0)	*	MV[1][0];
+		    v += ghost(ii,   jj,   0, 0)	*	MV[1][1];
+		    v += ghost(ii,   jj+1, 0, 0)	*	MV[1][2];
+		    v += ghost(ii+1, jj-1, 0, 0)	*	MV[2][0];
+		    v += ghost(ii+1, jj,   0, 0)	*	MV[2][1];
+		    v += ghost(ii+1, jj+1, 0, 0)	*	MV[2][2];
+
+				if (h + v < 0){
+					final(ii, jj, 0, 0) = 0;
+				} else if (h + v > 255) {
+					final(ii, jj, 0, 0) = 0;
+				} else {
+		    	final(ii, jj, 0, 0) = h + v;
+		    }
+			}
+		}
+	}
+	printf("\n\nparallel_v1, num_threads: %d\n", n_threads);
+	printf("image size: [%d x %d]\n", width, height);
+	cimg::toc();
+	printf("\n\n");
+	// final.save("images/prewitt.jpg");
 }
 
 
@@ -157,6 +269,7 @@ void prewitt(){
 	printf("image size: [%d x %d]\n", width, height);
 	cimg::toc();
 	printf("\n\n\n\n\n");
+	// final.save("images/prewitt.jpg");
 }
 
 int convolve_one_pixel(int k, int l, int win_size) {
@@ -177,8 +290,9 @@ int convolve_one_pixel(int k, int l, int win_size) {
 
 
 
-void init(char *file){	
+void init(char *file, int threads){	
 	//
+	n_threads = threads;
 	CImg<unsigned char> img(file);
 	image = img;
 	width = image.width();
@@ -232,6 +346,9 @@ void gauss_blur() {
 		}
 	}
 	ghost = aux;
-	ghost.save("images/blur.jpg");
+	// ghost.save("images/blur.jpg");
 }
 
+void set_threads(int threads) {
+	n_threads = threads;
+}
