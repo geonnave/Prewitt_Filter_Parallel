@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
 		prewitt_parallel_v2();
 		prewitt_parallel_v3();
 	} else {
-		init("images/duck.jpg", 4);
+		init("images/duck.jpg", 2);
 		// gauss_blur();
 		prewitt();
 		prewitt_parallel_v1();

@@ -32,7 +32,6 @@ void run(){
 
 
 
-
 void prewitt_parallel_v3(){	
 	cimg::tic();
 	#pragma omp parallel num_threads(n_threads)
@@ -42,43 +41,34 @@ void prewitt_parallel_v3(){
 		int nt = omp_get_thread_num();
 		int start = ((width/omp_get_num_threads())*nt)+1;
 		int end = start+(width/omp_get_num_threads());
-		ii = end-1;
-		iend = start;
-		if (!(nt % 2)) {
+		if (nt % 2 == 1) {
 			ii = start;
 			iend = end-1;
-		} 
-		while (ii != iend)
-		// for (ii = start; ii < end; ++ii)
+		} else {
+			ii = end-1;
+			iend = start;
+		}
+		while (ii != iend)// for (ii = start; ii < end; ++ii)
 		{
-			jj = height-1;
-			jend = 1;
-			if (!(ii % 2)) {
+			if (ii % 2 == 1) {
 				jj = 1;
 				jend = height-1;
+			} else {
+				jj = height-1;
+				jend = 1;
 			}
-			while (jj != jend) 
-			// for (jj = 1; jj < height; ++jj)
+			while (jj != jend) //for (jj = 1; jj < height; ++jj)
 			{
-				h =  ghost(ii-1, jj-1, 0, 0)	*	MH[0][0];
-		    h += ghost(ii-1, jj,   0, 0)	*	MH[0][1];
-		    h += ghost(ii-1, jj+1, 0, 0)	*	MH[0][2];
-		    h += ghost(ii,   jj-1, 0, 0)	*	MH[1][0];
-		    h += ghost(ii,   jj,   0, 0)	*	MH[1][1];
-		    h += ghost(ii,   jj+1, 0, 0)	*	MH[1][2];
-		    h += ghost(ii+1, jj-1, 0, 0)	*	MH[2][0];
-		    h += ghost(ii+1, jj,   0, 0)	*	MH[2][1];
-		    h += ghost(ii+1, jj+1, 0, 0)	*	MH[2][2];
-
-				v =  ghost(ii-1, jj-1, 0, 0)	*	MV[0][0];
-		    v += ghost(ii-1, jj,   0, 0)	*	MV[0][1];
-		    v += ghost(ii-1, jj+1, 0, 0)	*	MV[0][2];
-		    v += ghost(ii,   jj-1, 0, 0)	*	MV[1][0];
-		    v += ghost(ii,   jj,   0, 0)	*	MV[1][1];
-		    v += ghost(ii,   jj+1, 0, 0)	*	MV[1][2];
-		    v += ghost(ii+1, jj-1, 0, 0)	*	MV[2][0];
-		    v += ghost(ii+1, jj,   0, 0)	*	MV[2][1];
-		    v += ghost(ii+1, jj+1, 0, 0)	*	MV[2][2];
+				h = 0;
+				v = 0;
+				for (int k = -1; k < 2; ++k)
+				{
+					for (int l = -1; l < 2; ++l)
+					{
+						h += ghost(ii+k, jj+l, 0, 0) * MH[k+1][j+1];
+						v += ghost(ii+k, jj+l, 0, 0) * MV[k+1][j+1];
+					}
+				}
 
 				if (h + v < 0){
 					final(ii, jj, 0, 0) = 0;
@@ -98,7 +88,7 @@ void prewitt_parallel_v3(){
 				ii--;
 		}
 	}
-	printf("\n\nparallel_v3, num_threads: %d\n", n_threads);
+	printf("\n\nparallel_v2, num_threads: %d\n", n_threads);
 	printf("image size: [%d x %d]\n", width, height);
 	cimg::toc();
 	printf("\n\n");
@@ -132,24 +122,24 @@ void prewitt_parallel_v2(){
 			while (jj != jend) //for (jj = 1; jj < height; ++jj)
 			{
 				h =  ghost(ii-1, jj-1, 0, 0)	*	MH[0][0];
-		    h += ghost(ii-1, jj,   0, 0)	*	MH[0][1];
-		    h += ghost(ii-1, jj+1, 0, 0)	*	MH[0][2];
-		    h += ghost(ii,   jj-1, 0, 0)	*	MH[1][0];
-		    h += ghost(ii,   jj,   0, 0)	*	MH[1][1];
-		    h += ghost(ii,   jj+1, 0, 0)	*	MH[1][2];
-		    h += ghost(ii+1, jj-1, 0, 0)	*	MH[2][0];
-		    h += ghost(ii+1, jj,   0, 0)	*	MH[2][1];
-		    h += ghost(ii+1, jj+1, 0, 0)	*	MH[2][2];
+				h += ghost(ii-1, jj,   0, 0)	*	MH[0][1];
+				h += ghost(ii-1, jj+1, 0, 0)	*	MH[0][2];
+				h += ghost(ii,   jj-1, 0, 0)	*	MH[1][0];
+				h += ghost(ii,   jj,   0, 0)	*	MH[1][1];
+				h += ghost(ii,   jj+1, 0, 0)	*	MH[1][2];
+				h += ghost(ii+1, jj-1, 0, 0)	*	MH[2][0];
+				h += ghost(ii+1, jj,   0, 0)	*	MH[2][1];
+				h += ghost(ii+1, jj+1, 0, 0)	*	MH[2][2];
 
 				v =  ghost(ii-1, jj-1, 0, 0)	*	MV[0][0];
-		    v += ghost(ii-1, jj,   0, 0)	*	MV[0][1];
-		    v += ghost(ii-1, jj+1, 0, 0)	*	MV[0][2];
-		    v += ghost(ii,   jj-1, 0, 0)	*	MV[1][0];
-		    v += ghost(ii,   jj,   0, 0)	*	MV[1][1];
-		    v += ghost(ii,   jj+1, 0, 0)	*	MV[1][2];
-		    v += ghost(ii+1, jj-1, 0, 0)	*	MV[2][0];
-		    v += ghost(ii+1, jj,   0, 0)	*	MV[2][1];
-		    v += ghost(ii+1, jj+1, 0, 0)	*	MV[2][2];
+				v += ghost(ii-1, jj,   0, 0)	*	MV[0][1];
+				v += ghost(ii-1, jj+1, 0, 0)	*	MV[0][2];
+				v += ghost(ii,   jj-1, 0, 0)	*	MV[1][0];
+				v += ghost(ii,   jj,   0, 0)	*	MV[1][1];
+				v += ghost(ii,   jj+1, 0, 0)	*	MV[1][2];
+				v += ghost(ii+1, jj-1, 0, 0)	*	MV[2][0];
+				v += ghost(ii+1, jj,   0, 0)	*	MV[2][1];
+				v += ghost(ii+1, jj+1, 0, 0)	*	MV[2][2];
 
 				if (h + v < 0){
 					final(ii, jj, 0, 0) = 0;
