@@ -13,14 +13,12 @@ int main(int argc, char* argv[]) {
 			t = atoi(argv[3]);
 		else
 			t = 10;
+		init(argv[1], atoi(argv[2]));
 		for (i = 0; i < t; ++i)
 		{
 			printf("exec %d...\n", i+1);
-			init(argv[1], atoi(argv[2]));
 			s += prewitt();
-			init(argv[1], atoi(argv[2]));
 			pv1 += prewitt_parallel_v1();
-			init(argv[1], atoi(argv[2]));
 			pv2 += prewitt_parallel_v2();
 		}
 		printf("\n\n\n");

@@ -17,6 +17,7 @@ using namespace std;
 void init(char *file, int threads);
 void ghost_image();
 void print(char *mode, double time);
+void shuffle_final();
 double prewitt();
 double prewitt_parallel_v1();
 double prewitt_parallel_v2();

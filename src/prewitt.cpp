@@ -92,6 +92,7 @@ double prewitt_parallel_v2(){
 	end_t = omp_get_wtime();
 	cpu_time_used = ( (end_t - start_t));
 	final.save("images/prewitt.jpg");
+	shuffle_final();
 	return cpu_time_used;
 }
 
@@ -143,6 +144,7 @@ double prewitt_parallel_v1(){
 	end_t = omp_get_wtime();
 	cpu_time_used = ( (end_t - start_t));
 	// final.save("images/prewitt.jpg");
+	shuffle_final();
 	return cpu_time_used;
 }
 
@@ -191,9 +193,9 @@ double prewitt(){
 	end_t = clock();
 	cpu_time_used = ((double) (end_t - start_t)) / CLOCKS_PER_SEC;
 	// final.save("images/prewitt.jpg");
+	shuffle_final();
 	return cpu_time_used;
 }
-
 
 
 
@@ -282,4 +284,9 @@ void print(char *mode, double time) {
 	printf("%s, image size: [%d x %d]\n", filename, width, height);
 	printf("%s, %d threads\n", mode, n_threads);
 	cout << "CPU Time: " << time << " seconds\n\n";	
+}
+
+void shuffle_final() {
+	CImg<unsigned char> fnl(width,height,1,1);
+	final = fnl;
 }
