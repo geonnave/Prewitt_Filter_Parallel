@@ -4,13 +4,14 @@
 
 
 int i, j;
-int n_threads = 4;
+int n_threads = 2;
 CImg<unsigned char> image("images/lena.tif");
 int width = image.width();
 int height = image.height();
 int depth = image.depth();
 CImg<unsigned char> ghost(width+2,height+2,1,1);
 CImg<unsigned char> final(width,height,1,1);
+char *filename;
 
 const int MH[3][3] = {-1,-1,-1, 0,0,0, 1,1,1}, MV[3][3] = {-1,0,1, -1,0,1, -1,0,1};
 int gb[5][5] = {1, 4, 7, 4, 1,
@@ -23,24 +24,24 @@ int gb[5][5] = {1, 4, 7, 4, 1,
 
 
 
-void run(){
-	gauss_blur();
-	prewitt_parallel_v2();
-	prewitt();
-	// display();
-}
+// void run(){
+// 	gauss_blur();
+// 	prewitt_parallel_v2();
+// 	prewitt();
+// 	// display();
+// }
 
 
 
 
-void prewitt_parallel_v2(){	
+double prewitt_parallel_v2(){	
 	double start_t, end_t;
 	double cpu_time_used;
 	start_t = omp_get_wtime();
 	#pragma omp parallel num_threads(n_threads)
 	{
-		int ii, jj, iend, jend;
-		int h, v;
+		int ii, iend, jj=height-1, jend=1, sum=1;
+		int h, v, t;
 		int nt = omp_get_thread_num();
 		int start = ((width/omp_get_num_threads())*nt)+1;
 		int end = start+(width/omp_get_num_threads());
@@ -48,12 +49,15 @@ void prewitt_parallel_v2(){
 		{
 			jj = height-1;
 			jend = 1;
+			sum = -1;
 			if (!(ii % 2)) {
 				jj = 1;
 				jend = height-1;
+				sum = 1;
 			} 
 			while (jj != jend) //for (jj = 1; jj < height; ++jj)
 			{
+				// printf("%d:%d\n", ii, jj );
 				h =  ghost(ii-1, jj-1, 0, 0)	*	MH[0][0];
 				h += ghost(ii-1, jj,   0, 0)	*	MH[0][1];
 				h += ghost(ii-1, jj+1, 0, 0)	*	MH[0][2];
@@ -77,29 +81,21 @@ void prewitt_parallel_v2(){
 				if (h + v < 0){
 					final(ii, jj, 0, 0) = 0;
 				} else if (h + v > 255) {
-					final(ii, jj, 0, 0) = 0;
+					final(ii, jj, 0, 0) = 255;
 				} else {
-		    	final(ii, jj, 0, 0) = h + v;
+		    	final(ii, jj, 0, 0) = h + v;	
 		    }
-		    if (jend == height-1)
-		    	jj++;
-		    else
-		    	jj--;
+		    jj += sum;
 			}
-			// if (iend == end-1)
-			// 	ii++;
-			// else
-			// 	ii--;
 		}
 	}
-	printf("\n\nparallel_v2, num_threads: %d\n", n_threads);
-	printf("image size: [%d x %d]\n", width, height);
 	end_t = omp_get_wtime();
 	cpu_time_used = ( (end_t - start_t));
-	cout << "CPU Time: " << cpu_time_used << " seconds\n\n";
 	final.save("images/prewitt.jpg");
+	return cpu_time_used;
 }
-void prewitt_parallel_v1(){	
+
+double prewitt_parallel_v1(){	
 	double start_t, end_t;
 	double cpu_time_used;
 	start_t = omp_get_wtime();
@@ -144,19 +140,17 @@ void prewitt_parallel_v1(){
 			}
 		}
 	}
-	printf("\n\nparallel_v1, num_threads: %d\n", n_threads);
-	printf("image size: [%d x %d]\n", width, height);
 	end_t = omp_get_wtime();
 	cpu_time_used = ( (end_t - start_t));
-	cout << "CPU Time: " << cpu_time_used << " seconds\n\n";
 	// final.save("images/prewitt.jpg");
+	return cpu_time_used;
 }
 
 
 
 
 
-void prewitt(){
+double prewitt(){
 	int h, v;
 	clock_t start_t, end_t;
 	double cpu_time_used;
@@ -194,27 +188,10 @@ void prewitt(){
 	    }
 		}
 	}
-	printf("\n\n\n\n\n");
-	printf("image size: [%d x %d]\n", width, height);
 	end_t = clock();
 	cpu_time_used = ((double) (end_t - start_t)) / CLOCKS_PER_SEC;
-	cout << "CPU Time: " << cpu_time_used << " seconds\n\n";	
-	printf("\n\n\n\n\n");
 	// final.save("images/prewitt.jpg");
-}
-
-int convolve_one_pixel(int k, int l, int win_size) {
-	int sum = 0;
-	int ii, jj;
-	for (ii = 0; ii < win_size; ++ii)
-	{
-		for (jj = 0; jj < win_size; ++jj)
-		{
-			sum += ghost(k+ii, l+jj, 0, 0)*gb[ii][jj];
-		}
-	}
-	sum = (int) sum/273;
-	return sum;
+	return cpu_time_used;
 }
 
 
@@ -225,6 +202,7 @@ void init(char *file, int threads){
 	//
 	n_threads = threads;
 	CImg<unsigned char> img(file);
+	filename = file;
 	image = img;
 	width = image.width();
 	height = image.height();
@@ -269,6 +247,8 @@ void display(){
 
 void gauss_blur() {
 	CImg<unsigned char> aux(width+2,height+2,1,1);
+
+	#pragma omp parallel for
 	for (i = 2; i < width-1; ++i)
 	{
 		for (j = 2; j < height-1; ++j)
@@ -280,6 +260,26 @@ void gauss_blur() {
 	// ghost.save("images/blur.jpg");
 }
 
+int convolve_one_pixel(int k, int l, int win_size) {
+	int sum = 0;
+	int ii, jj;
+	for (ii = 0; ii < win_size; ++ii)
+	{
+		for (jj = 0; jj < win_size; ++jj)
+		{
+			sum += ghost(k+ii, l+jj, 0, 0)*gb[ii][jj];
+		}
+	}
+	sum = (int) sum/273;
+	return sum;
+}
+
 void set_threads(int threads) {
 	n_threads = threads;
+}
+
+void print(char *mode, double time) {
+	printf("%s, image size: [%d x %d]\n", filename, width, height);
+	printf("%s, %d threads\n", mode, n_threads);
+	cout << "CPU Time: " << time << " seconds\n\n";	
 }

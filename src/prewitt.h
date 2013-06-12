@@ -16,11 +16,10 @@ using namespace std;
 
 void init(char *file, int threads);
 void ghost_image();
-void run();
-void prewitt();
-void prewitt_parallel_v3();
-void prewitt_parallel_v2();
-void prewitt_parallel_v1();
+void print(char *mode, double time);
+double prewitt();
+double prewitt_parallel_v1();
+double prewitt_parallel_v2();
 int convolve_one_pixel(int k, int l, int border_len);
 void gauss_blur();
 void soma();
